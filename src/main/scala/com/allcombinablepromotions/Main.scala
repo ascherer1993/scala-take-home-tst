@@ -17,108 +17,50 @@ object Main extends App {
     Promotion("P4", Seq("P2")),
     Promotion("P5", Seq("P2"))
   )
-  println(allCombinablePromotions(allPromotions))
+  println("All Promotion Combos:")
+  allCombinablePromotions(allPromotions).foreach(println(_))
 
+  println("\nPromotion Combos for P1:")
+  combinablePromotions("P1", allPromotions).foreach(println(_))
+
+  println("\nPromotion Combos for P3:")
   combinablePromotions("P3", allPromotions).foreach(println(_))
-
   sleep(4000)
 }
-
-def allCombinablePromotions(
-    allPromotions: Seq[Promotion]
-): Seq[PromotionCombo] = {
-
-  def isValidSubset(subset: Set[Promotion]): Boolean = {
+def isValidSubset(subset: Set[Promotion]): Boolean = {
     subset.forall(p1 =>
       subset.forall(p2 => p1 == p2 || !p1.notCombinableWith.contains(p2.code))
     )
   }
 
-  def allSubsets[T](seq: Seq[T]): Seq[Seq[T]] = {
-    seq match {
-      case Nil => Seq(Seq.empty)
-      case head +: tail =>
-        val tailSubsets = allSubsets(tail)
-        tailSubsets ++ tailSubsets.map(head +: _)
-    }
-  }
-  val validSubsets = allPromotions.toSet.subsets.filter(isValidSubset).map(_.toSeq).toSeq
-  //println(validSubsets)
-
-  def isMaximalSubset(subset: Seq[Promotion]): Boolean = {
-    !validSubsets.exists(other =>
+def isMaximalSubset(allSubsets: Seq[Seq[Promotion]], subset: Seq[Promotion]): Boolean = {
+    !allSubsets.exists(other =>
       other.size > subset.size && subset.forall(other.contains)
     )
   }
-
-  // Find all maximal valid subsets
-  val maximalSubsets = validSubsets.filter(isMaximalSubset)
-
-  maximalSubsets.map(subset => PromotionCombo(subset.map(_.code).sorted))
-}
-
-def allCombinablePromotions2(
-    allPromotions: Seq[Promotion]
-): Seq[PromotionCombo] = {
-
-  // Helper functions
-  def isValidSubset(subset: Seq[Promotion]): Boolean = {
-    subset.forall(p1 =>
-      subset.forall(p2 => p1 == p2 || !p1.notCombinableWith.contains(p2.code))
-    )
-  }
-
-  def allSubsets[T](seq: Seq[T]): Seq[Seq[T]] = {
-    seq match {
-      case Nil => Seq(Seq.empty)
-      case head +: tail =>
-        val tailSubsets = allSubsets(tail)
-        tailSubsets ++ tailSubsets.map(head +: _)
-    }
-  }
-  val validSubsets = allSubsets(allPromotions).filter(isValidSubset)
-
-  def isMaximalSubset(subset: Seq[Promotion]): Boolean = {
-    !validSubsets.exists(other =>
-      other.size > subset.size && subset.forall(other.contains)
-    )
-  }
-
-  // Find all maximal valid subsets
-  val maximalSubsets = validSubsets.filter(isMaximalSubset)
-
-  // Convert to PromotionCombo
-  maximalSubsets.map(subset => PromotionCombo(subset.map(_.code)))
-}
 
 def combinablePromotions(
     promotionCode: String,
     allPromotions: Seq[Promotion]
 ): Seq[PromotionCombo] = {
-  def allSubsets[T](seq: Seq[T]): Seq[Seq[T]] = {
-    seq match {
-      case Nil => Seq(Seq.empty)
-      case head +: tail =>
-        val tailSubsets = allSubsets(tail)
-        tailSubsets ++ tailSubsets.map(head +: _)
-    }
-  }
-  def isValidSubset(subset: Seq[Promotion]): Boolean = {
-    subset.forall(p1 =>
-      subset.forall(p2 => p1 == p2 || !p1.notCombinableWith.contains(p2.code))
-    )
-  }
-  val validSubsetsContaingValue = allSubsets(allPromotions).filter(f => f.map(g => g.code).contains(promotionCode)).filter(isValidSubset)
 
-  def isMaximalSubset(subset: Seq[Promotion]): Boolean = {
-    !validSubsetsContaingValue.exists(other =>
-      other.size > subset.size && subset.forall(other.contains)
-    )
-  }
+  val allSubsetsWithCode = allPromotions.toSet.subsets.filter(f => f.map(g => g.code).contains(promotionCode));
+  val validSubsetsContaingCode = allSubsetsWithCode.filter(isValidSubset).map(_.toSeq).toSeq
 
   // Find all maximal valid subsets
-  val maximalSubsets = validSubsetsContaingValue.filter(isMaximalSubset)
+  val maximalSubsets = validSubsetsContaingCode.filter(isMaximalSubset(validSubsetsContaingCode, _))
 
-  // Convert to PromotionCombo
   maximalSubsets.map(subset => PromotionCombo(subset.map(_.code)))
+}
+
+def allCombinablePromotions(
+    allPromotions: Seq[Promotion]
+): Seq[PromotionCombo] = {
+  
+  val validSubsets = allPromotions.toSet.subsets.filter(isValidSubset).map(_.toSeq).toSeq
+
+  // Find all maximal valid subsets
+  val maximalSubsets = validSubsets.filter(isMaximalSubset(validSubsets, _))
+
+  maximalSubsets.map(subset => PromotionCombo(subset.map(_.code).sorted)).sortBy(_.promotionCodes(0)) //added sortby to match order of expected output
 }
