@@ -1,10 +1,10 @@
-package com.allcobinablepromotions.tests
+package com.allcombinablepromotions.tests
 
-import com.allcobinablepromotions.PromotionUtil
+import com.allcombinablepromotions.PromotionUtil
 import com.allcombinablepromotions.models.Promotion
 import com.allcombinablepromotions.models.PromotionCombo
-import com.allcobinablepromotions.PromotionUtil.combinablePromotions
-import com.allcobinablepromotions.PromotionUtil.allCombinablePromotions
+import com.allcombinablepromotions.PromotionUtil.combinablePromotions
+import com.allcombinablepromotions.PromotionUtil.allCombinablePromotions
 
 class PromotionUtilTests extends munit.FunSuite {
   // IsMaximalSubset
@@ -96,5 +96,4 @@ class PromotionUtilTests extends munit.FunSuite {
     )
     assertEquals(allCombinablePromotions(allPromotions), expected)
   }
-
 }

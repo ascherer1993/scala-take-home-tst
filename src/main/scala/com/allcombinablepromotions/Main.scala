@@ -1,30 +1,43 @@
-package com.allcobinablepromotions
+package com.allcombinablepromotions
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
-import com.allcombinablepromotions.models.Promotion
-import com.allcombinablepromotions.models.PromotionCombo
+import com.allcombinablepromotions.models.{Promotion, PromotionCombo}
+import com.allcombinablepromotions.providers.{DataProvider, MockDataProvider}
 
 object Main extends App {
-  val allPromotions = Seq(
-    Promotion("P1", Seq("P3")),
-    Promotion("P2", Seq("P4", "P5")),
-    Promotion("P3", Seq("P1")),
-    Promotion("P4", Seq("P2")),
-    Promotion("P5", Seq("P2"))
-  )
+  val dataProvider: DataProvider =
+    new MockDataProvider // probably dependency injected in production code. Could be database, could be third party
 
-  println("All Promotion Combos:")
-  PromotionUtil.allCombinablePromotions(allPromotions).foreach(println(_))
+  val futurePromotions: Future[Seq[Promotion]] =
+    dataProvider.fetchPromotionalCodes
 
-  println("\nPromotion Combos for P1:")
-  PromotionUtil.combinablePromotions("P1", allPromotions).foreach(println(_))
+  futurePromotions.onComplete {
+    case Success(promotions) => {
+      println("All Promotion Combos:")
+      PromotionUtil.allCombinablePromotions(promotions).foreach(println(_))
 
-  println("\nPromotion Combos for P3:")
-  PromotionUtil.combinablePromotions("P3", allPromotions).foreach(println(_))
-  Thread.sleep(4000)
+      println("\nPromotion Combos for P1:")
+      PromotionUtil
+        .combinablePromotions("P1", promotions)
+        .foreach(println(_))
+
+      println("\nPromotion Combos for P3:")
+      PromotionUtil
+        .combinablePromotions("P3", promotions)
+        .foreach(println(_))
+    }
+    case Failure(e) => {
+      println("Failed to get data from data provider")
+      e.printStackTrace
+    }
+  }
+
+  Thread.sleep(
+    4000
+  ) // only required in this case to allow futures to finish execution
 }
 
 object PromotionUtil {
@@ -54,10 +67,10 @@ object PromotionUtil {
     val allSubsetsWithCode = allPromotions.toSet.subsets.filter(f =>
       f.map(g => g.code).contains(promotionCode)
     );
+
     val validSubsetsContaingCode =
       allSubsetsWithCode.filter(isValidSubset).map(_.toSeq).toSeq
 
-    // Find all maximal valid subsets
     val maximalSubsets = validSubsetsContaingCode.filter(
       isMaximalSubset(validSubsetsContaingCode, _)
     )
@@ -73,13 +86,12 @@ object PromotionUtil {
     val validSubsets =
       allPromotions.toSet.subsets.filter(isValidSubset).map(_.toSeq).toSeq
 
-    // Find all maximal valid subsets
     val maximalSubsets = validSubsets.filter(isMaximalSubset(validSubsets, _))
 
     maximalSubsets
       .map(subset => PromotionCombo(subset.map(_.code).sorted))
       .sortBy(
         _.promotionCodes(0)
-      ) // added sortby to match order of expected output
+      ) // added sorts to match order of expected output
   }
 }
