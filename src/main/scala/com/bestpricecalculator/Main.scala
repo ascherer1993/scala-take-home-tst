@@ -30,44 +30,45 @@ object Main extends App {
   }
 
   sleep(4000) // only required in this case to allow futures to finish execution
-}
 
-def getBestGroupPrices(
+  def getBestGroupPrices(
     rates: Seq[Rate],
     prices: Seq[CabinPrice]
-): Seq[BestGroupPrice] = {
-  val rateLookup: Map[String, String] =
-    rates.map(rate => rate.rateCode -> rate.rateGroup).toMap
+  ): Seq[BestGroupPrice] = {
+    val rateLookup: Map[String, String] =
+      rates.map(rate => rate.rateCode -> rate.rateGroup).toMap
 
-  // Example output showed prices for each combination of cabinCode and group
-  val pricesWithGroup: Map[(String, String), Seq[CabinPriceWithRateGroup]] = prices
-    .flatMap { cabinPrice =>
-      rateLookup
-        .get(cabinPrice.rateCode)
-        .map(rateGroup =>
-          CabinPriceWithRateGroup(
-            cabinPrice.cabinCode,
-            cabinPrice.rateCode,
-            cabinPrice.price,
-            rateGroup
+    // Example output showed prices for each combination of cabinCode and group
+    val pricesWithGroup: Map[(String, String), Seq[CabinPriceWithRateGroup]] = prices
+      .flatMap { cabinPrice =>
+        rateLookup
+          .get(cabinPrice.rateCode)
+          .map(rateGroup =>
+            CabinPriceWithRateGroup(
+              cabinPrice.cabinCode,
+              cabinPrice.rateCode,
+              cabinPrice.price,
+              rateGroup
+            )
+          )
+      }
+      .groupBy(price => (price.rateGroup, price.cabinCode))
+
+    // Get cheapest option for each cabin in each rate group
+    pricesWithGroup.values
+      .flatMap(group => {
+        val minPrice = group.minBy(_.price)
+        Seq(
+          BestGroupPrice(
+            minPrice.cabinCode,
+            minPrice.rateCode,
+            minPrice.price,
+            minPrice.rateGroup
           )
         )
-    }
-    .groupBy(price => (price.rateGroup, price.cabinCode))
-
-  // Get cheapest option for each cabin in each rate group
-  pricesWithGroup.values
-    .flatMap(group => {
-      val minPrice = group.minBy(_.price)
-      Seq(
-        BestGroupPrice(
-          minPrice.cabinCode,
-          minPrice.rateCode,
-          minPrice.price,
-          minPrice.rateGroup
-        )
-      )
-    })
-    .toSeq
-    .sortBy(_.cabinCode) // to match example data, not needed
+      })
+      .toSeq
+      .sortBy(_.cabinCode) // to match example data, not needed
+  }
 }
+
