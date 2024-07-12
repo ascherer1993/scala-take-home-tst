@@ -11,6 +11,8 @@ As long as you have sbt and the java JDK installed ([Documentation](https://docs
 
 You can compile code with `sbt compile`, run it with `sbt run`, and `sbt console` will start a Scala 3 REPL.
 
+Note on setup: I used homebrew to install sbt and did have to update my xcode to a newer version for this to work
+
 I set the prompts up as two separate projects, so once running, you will be prompted to enter a 1 or a 2 to match the prompt that you wish to run the code for.
 
 Enter `2` for the problem on best price for rate groups (Problem 1)
