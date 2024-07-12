@@ -1,6 +1,6 @@
 package com.allcobinablepromotions.tests
 
-import com.allcobinablepromotions.Main
+import com.allcobinablepromotions.PromotionFinder
 
 class MainTests extends munit.FunSuite {
   test("example test that succeeds") {

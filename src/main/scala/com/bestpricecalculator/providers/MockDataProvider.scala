@@ -21,6 +21,7 @@ class MockDataProvider extends DataProvider {
   override def fetchCabinPrices: Future[Seq[CabinPrice]] = 
     Future {
       Thread.sleep(1000)
+      //throw new RuntimeException("Error fetching data") // for testing future failures
       Seq(
         CabinPrice("CA", "M1", 200.00),
         CabinPrice("CA", "M2", 250.00),

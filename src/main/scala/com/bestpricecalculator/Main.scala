@@ -6,11 +6,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Success, Failure}
 import providers.{DataProvider, MockDataProvider}
 import models.{Rate, CabinPrice, BestGroupPrice, CabinPriceWithRateGroup}
-
-def sleep(time: Long): Unit = Thread.sleep(time)
+import scala.util.Try
 
 object Main extends App {
-  val dataProvider: DataProvider = new MockDataProvider //probably dependency injected in production code
+  val dataProvider: DataProvider =
+    new MockDataProvider // probably dependency injected in production code
 
   val futureRates: Future[Seq[Rate]] = dataProvider.fetchRates
   val futureCabinPrices: Future[Seq[CabinPrice]] =
@@ -23,36 +23,54 @@ object Main extends App {
     yield (rates, cabinPrices)
 
   result.onComplete {
-    case Success(x) =>
-      getBestGroupPrices(x._1, x._2).foreach(result => println(result))
-    case Failure(e) =>
-      e.printStackTrace //failed one of the fetch methods
+    case Success(rates, cabinPrices) => {
+      Try(PriceCalculator.getBestGroupPrices(rates, cabinPrices)) match {
+        case Success(returnedValues) => {
+          println("Best Group Prices Per Cabin:")
+          returnedValues.foreach(result => println(result))
+        }
+        case Failure(ex) => {
+          println("Failed to get best group prices")
+          ex.printStackTrace
+        }
+      }
+    }
+    case Failure(e) => {
+      println("Failed to get data from third party provider")
+      e.printStackTrace
+    }
   }
 
-  sleep(4000) // only required in this case to allow futures to finish execution
+  Thread.sleep(
+    4000
+  ) // only required in this case to allow futures to finish execution
 
+}
+
+object PriceCalculator {
   def getBestGroupPrices(
-    rates: Seq[Rate],
-    prices: Seq[CabinPrice]
+      rates: Seq[Rate],
+      prices: Seq[CabinPrice]
   ): Seq[BestGroupPrice] = {
     val rateLookup: Map[String, String] =
       rates.map(rate => rate.rateCode -> rate.rateGroup).toMap
 
     // Example output showed prices for each combination of cabinCode and group
-    val pricesWithGroup: Map[(String, String), Seq[CabinPriceWithRateGroup]] = prices
-      .flatMap { cabinPrice =>
-        rateLookup
-          .get(cabinPrice.rateCode)
-          .map(rateGroup =>
-            CabinPriceWithRateGroup(
-              cabinPrice.cabinCode,
-              cabinPrice.rateCode,
-              cabinPrice.price,
-              rateGroup
+    val pricesWithGroup: Map[(String, String), Seq[CabinPriceWithRateGroup]] =
+      prices
+        .flatMap { cabinPrice =>
+          rateLookup
+            .get(cabinPrice.rateCode)
+            .map(rateGroup =>
+              CabinPriceWithRateGroup(
+                cabinPrice.cabinCode,
+                cabinPrice.rateCode,
+                cabinPrice.price,
+                rateGroup
+              )
             )
-          )
-      }
-      .groupBy(price => (price.rateGroup, price.cabinCode))
+        }
+        .groupBy(price => (price.rateGroup, price.cabinCode))
 
     // Get cheapest option for each cabin in each rate group
     pricesWithGroup.values
@@ -71,4 +89,3 @@ object Main extends App {
       .sortBy(_.cabinCode) // to match example data, not needed
   }
 }
-
