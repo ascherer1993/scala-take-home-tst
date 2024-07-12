@@ -6,9 +6,9 @@ import com.bestpricecalculator.models.CabinPrice
 import com.bestpricecalculator.models.CabinPriceWithRateGroup
 import com.bestpricecalculator.models.BestGroupPrice
 
-class MainTests extends munit.FunSuite {
+class PriceCalculatorTests extends munit.FunSuite {
 
-  //Test data
+  // Test data
   val validExampleRates = Seq(
     Rate("M1", "Military"),
     Rate("M2", "Military"),
@@ -42,7 +42,9 @@ class MainTests extends munit.FunSuite {
     CabinPrice("CB", "S4", 270.00)
   )
 
-  test("getBestGroupPrices should return cheapest cabin rategroup combo for example data") {
+  test(
+    "getBestGroupPrices should return cheapest cabin rategroup combo for example data"
+  ) {
 
     val expected = Seq(
       BestGroupPrice("CA", "M1", 200, "Military"),
@@ -73,6 +75,4 @@ class MainTests extends munit.FunSuite {
     var response = getBestGroupPrices(validExampleRates, emptyCabinPricesSeq)
     assertEquals(response.length, 0)
   }
-  
-  //
 }

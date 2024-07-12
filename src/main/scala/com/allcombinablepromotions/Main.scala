@@ -17,26 +17,26 @@ object Main extends App {
   )
 
   println("All Promotion Combos:")
-  PromotionFinder.allCombinablePromotions(allPromotions).foreach(println(_))
+  PromotionUtil.allCombinablePromotions(allPromotions).foreach(println(_))
 
   println("\nPromotion Combos for P1:")
-  PromotionFinder.combinablePromotions("P1", allPromotions).foreach(println(_))
+  PromotionUtil.combinablePromotions("P1", allPromotions).foreach(println(_))
 
   println("\nPromotion Combos for P3:")
-  PromotionFinder.combinablePromotions("P3", allPromotions).foreach(println(_))
+  PromotionUtil.combinablePromotions("P3", allPromotions).foreach(println(_))
   Thread.sleep(4000)
 }
 
-object PromotionFinder {
-  //Determines if the provided subset matches the requirement of not having any codes that aren't compatible
-  private def isValidSubset(subset: Set[Promotion]): Boolean = {
+object PromotionUtil {
+  // Determines if the provided subset matches the requirement of not having any codes that aren't compatible
+  def isValidSubset(subset: Set[Promotion]): Boolean = {
     subset.forall(p1 =>
       subset.forall(p2 => p1 == p2 || !p1.notCombinableWith.contains(p2.code))
     )
   }
 
-  //Determines if the provided subset is the max size subset with regards to the provided seq of subsets
-  private def isMaximalSubset(
+  // Determines if the provided subset is the max size subset with regards to the provided seq of subsets
+  def isMaximalSubset(
       allSubsets: Seq[Seq[Promotion]],
       subset: Seq[Promotion]
   ): Boolean = {
@@ -45,7 +45,7 @@ object PromotionFinder {
     )
   }
 
-  //Gets all combinable promotions for the provided promotionCode
+  // Gets all combinable promotions for the provided promotionCode
   def combinablePromotions(
       promotionCode: String,
       allPromotions: Seq[Promotion]
@@ -62,10 +62,10 @@ object PromotionFinder {
       isMaximalSubset(validSubsetsContaingCode, _)
     )
 
-    maximalSubsets.map(subset => PromotionCombo(subset.map(_.code)))
+    maximalSubsets.map(subset => PromotionCombo(subset.map(_.code).sorted))
   }
 
-  //Gets all combinable promotions for the provided promotion code
+  // Gets all combinable promotions for the provided promotion code
   def allCombinablePromotions(
       allPromotions: Seq[Promotion]
   ): Seq[PromotionCombo] = {
