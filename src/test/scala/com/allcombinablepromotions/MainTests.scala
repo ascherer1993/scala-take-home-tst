@@ -41,7 +41,7 @@ class PromotionUtilTests extends munit.FunSuite {
 
   // IsValidSubset
   test("isValidSubset should return true for a valid subset") {
-    val promotions = Set(
+    val promotions = Seq(
       Promotion("P1", Seq("P4")),
       Promotion("P2", Seq("P5")),
       Promotion("P3", Seq.empty)
@@ -50,7 +50,7 @@ class PromotionUtilTests extends munit.FunSuite {
   }
 
   test("isValidSubset should return false for an invalid subset") {
-    val promotions = Set(
+    val promotions = Seq(
       Promotion("P1", Seq("P2")),
       Promotion("P2", Seq("P1"))
     )
@@ -80,7 +80,7 @@ class PromotionUtilTests extends munit.FunSuite {
 
     val promotionCode = "P3"
     val expected = Seq(
-      PromotionCombo(Seq("P2", "P3")),
+      PromotionCombo(Seq("P3", "P2")),
       PromotionCombo(Seq("P3", "P4", "P5"))
     )
     assertEquals(combinablePromotions(promotionCode, allPromotions), expected)

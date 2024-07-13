@@ -42,7 +42,7 @@ object Main extends App {
 
 object PromotionUtil {
   // Determines if the provided subset matches the requirement of not having any codes that aren't compatible
-  def isValidSubset(subset: Set[Promotion]): Boolean = {
+  def isValidSubset(subset: Seq[Promotion]): Boolean = {
     subset.forall(p1 =>
       subset.forall(p2 => p1 == p2 || !p1.notCombinableWith.contains(p2.code))
     )
@@ -58,40 +58,73 @@ object PromotionUtil {
     )
   }
 
-  // Gets all combinable promotions for the provided promotionCode
+  // Get all combinable promotions for provided code
   def combinablePromotions(
       promotionCode: String,
       allPromotions: Seq[Promotion]
   ): Seq[PromotionCombo] = {
+    val promotion: Option[Promotion] =
+      allPromotions.find(_.code == promotionCode)
 
-    val allSubsetsWithCode = allPromotions.toSet.subsets.filter(f =>
-      f.map(g => g.code).contains(promotionCode)
-    );
+    promotion match {
+      case Some(desiredPromotion) => {
+        val promotionsMinusDesiredCode: Seq[Promotion] =
+          allPromotions.filterNot(_ == desiredPromotion)
 
-    val validSubsetsContaingCode =
-      allSubsetsWithCode.filter(isValidSubset).map(_.toSeq).toSeq
+        val validCombinablePromotionsWithoutDesiredPromotion
+            : Seq[Seq[Promotion]] = allValidCombinablePromotions(
+          promotionsMinusDesiredCode
+        )
 
-    val maximalSubsets = validSubsetsContaingCode.filter(
-      isMaximalSubset(validSubsetsContaingCode, _)
-    )
+        val combinedPromotions: Seq[Seq[Promotion]] =
+          validCombinablePromotionsWithoutDesiredPromotion
+            .map(combo => desiredPromotion +: combo)
+            .filter(isValidSubset)
 
-    maximalSubsets.map(subset => PromotionCombo(subset.map(_.code).sorted))
+        val maximalSubsets: Seq[Seq[Promotion]] = combinedPromotions.filter(
+          isMaximalSubset(combinedPromotions, _)
+        )
+
+        maximalSubsets
+          .map(subset => PromotionCombo(subset.map(_.code)))
+      }
+      case None => {
+        println("Failed to find promotion")
+        Seq.empty
+      }
+    }
   }
 
-  // Gets all combinable promotions for the provided promotion code
+  // Get all combinable promotions
   def allCombinablePromotions(
       allPromotions: Seq[Promotion]
   ): Seq[PromotionCombo] = {
+    val validCombinablePromotions: Seq[Seq[Promotion]] =
+      allValidCombinablePromotions(allPromotions);
 
-    val validSubsets =
-      allPromotions.toSet.subsets.filter(isValidSubset).map(_.toSeq).toSeq
-
-    val maximalSubsets = validSubsets.filter(isMaximalSubset(validSubsets, _))
+    val maximalSubsets: Seq[Seq[Promotion]] = validCombinablePromotions.filter(
+      isMaximalSubset(validCombinablePromotions, _)
+    )
 
     maximalSubsets
-      .map(subset => PromotionCombo(subset.map(_.code).sorted))
-      .sortBy(
-        _.promotionCodes(0)
-      ) // added sorts to match order of expected output
+      .sortBy(_.head.code) // to match example data
+      .map(subset => PromotionCombo(subset.map(_.code)))
+  }
+
+  // Recursive function that gets all valid promotions
+  def allValidCombinablePromotions(
+      promotions: Seq[Promotion]
+  ): Seq[Seq[Promotion]] = {
+    promotions match {
+      case Nil         => Seq.empty
+      case head :: Nil => Seq(Seq(head))
+      case head :: tail =>
+        val allValidTailCombinations: Seq[Seq[Promotion]] =
+          allValidCombinablePromotions(tail)
+        (Seq(head) +: allValidTailCombinations) ++
+          allValidTailCombinations
+            .map(combo => head +: combo)
+            .filter(isValidSubset)
+    }
   }
 }
